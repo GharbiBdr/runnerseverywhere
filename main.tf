@@ -14,6 +14,21 @@ provider "google" {
     project = var.project_id
 }
 
+data "google_client_config" "current" {}
+
+provider "kubernetes" {
+  host                   = google_container_cluster.runners.endpoint
+  cluster_ca_certificate = base64decode(google_container_cluster.runners.master_auth.0.cluster_ca_certificate)
+  token                  = data.google_client_config.current.access_token
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = google_container_cluster.runners.endpoint
+    cluster_ca_certificate = base64decode(google_container_cluster.runners.master_auth.0.cluster_ca_certificate)
+    token                  = data.google_client_config.current.access_token
+  }
+}
 resource "google_project_service" "cloudresourcemanager" {
   project            = var.project_id
   service            = "cloudresourcemanager.googleapis.com"
@@ -54,19 +69,6 @@ resource "google_container_cluster" "runners" {
   depends_on = [
     google_project_service.gke,
   ]
-}
-
-provider "kubernetes" {
-  host                   = google_container_cluster.runners.endpoint
-  cluster_ca_certificate = base64decode(google_container_cluster.runners.master_auth.0.cluster_ca_certificate)
-  token                  = data.google_client_config.current.access_token
-}
-provider "helm" {
-  kubernetes {
-    host                   = google_container_cluster.runners.endpoint
-    cluster_ca_certificate = base64decode(google_container_cluster.runners.master_auth.0.cluster_ca_certificate)
-    token                  = data.google_client_config.current.access_token
-  }
 }
 
 module "my-app-workload-identity" {
