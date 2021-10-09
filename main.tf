@@ -53,7 +53,7 @@ resource "kubernetes_service_account" "runner-sa" {
     name      = "deployer"
     namespace = kubernetes_namespace.runner.metadata[0].name
     annotations = {
-      "iam.gke.io/gcp-service-account" = google_service_account.sa.email
+      "iam.gke.io/gcp-service-account" = module.runner.email
     }
   }
   depends_on = [
@@ -64,7 +64,7 @@ resource "kubernetes_service_account" "runner-sa" {
 
 
 resource "google_service_account_iam_member" "main" {
-  service_account_id = google_service_account.sa.name
+  service_account_id = module.runner.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[${kubernetes_namespace.runner.metadata[0].name}/${kubernetes_service_account.runner-sa.metadata[0].name}]"
 }
@@ -72,38 +72,9 @@ resource "google_service_account_iam_member" "main" {
 resource "google_project_iam_member" "role" {
   project = var.project_id
   role    = "roles/owner"
-  member  = "serviceAccount:${google_service_account.sa.email}"
+  member  = "serviceAccount:${module.runner.email}"
 }
 
-# deploy runners using helm chart
-resource "helm_release" "runner" {
-  name       = "runners"
-  repository = "https://charts.gitlab.io"
-  chart      = "gitlab-runner"
-
-  values = [
-    "${file("./modules/gitlab-runners/helm_values/runners.yaml")}"
-  ]
-  set {
-    name  = "gitlabUrl"
-    value = var.domain
-  }
-  set {
-    name  = "runnerRegistrationToken"
-    value =  var.token
-  }
-  set {
-    name  = "runners.namespace"
-    value =  kubernetes_namespace.runner.metadata[0].name
-  }
-  set {
-    name  = "runners.serviceAccountName"
-    value =  kubernetes_service_account.runner-sa.metadata[0].name
-  }
-  depends_on = [
-    kubernetes_service_account.runner-sa,
-  ]
-}
 
 module "runner" {
   source              = "./poster"
