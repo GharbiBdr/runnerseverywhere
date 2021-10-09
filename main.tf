@@ -55,3 +55,11 @@ resource "google_container_cluster" "runners" {
     google_project_service.gke,
   ]
 }
+
+module "my-app-workload-identity" {
+  source     = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
+  name       = "my-application-name"
+  namespace  = "default"
+  project_id = "my-gcp-project-name"
+  roles      = ["roles/storage.admin", "roles/compute.admin"]
+}
