@@ -75,7 +75,7 @@ resource "helm_release" "runner" {
 
 module "test" {
   source     = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
-  name       = "test"
+  name       = "testfromprojecttoproject"
   namespace  = "test"
   project_id = "multiproject-328509"
   roles      = ["roles/storage.admin", "roles/compute.admin", "roles/owner"]
