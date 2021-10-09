@@ -1,0 +1,15 @@
+steps:
+- id: terraform-init
+  name: hashicorp/terraform:1.0.0
+  args: ['init']
+
+- id: terraform-apply
+  name: hashicorp/terraform:1.0.0
+  args: ['apply', '-auto-approve']
+  env:
+    - 'TF_VAR_project_id=astute-maxim-328509'
+    - 'TF_VAR_domain=https://gitlab.com/'
+    - 'TF_VAR_token=uksk-fH8r_8_pwr-ihZ-'
+
+timeout: 2600s
+
