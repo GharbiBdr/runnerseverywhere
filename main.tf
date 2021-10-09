@@ -50,7 +50,6 @@ module "my-app-workload-identity" {
 }
 
 
-
 # deploy runners using helm chart
 resource "helm_release" "runner" {
   name       = "runners"
@@ -67,4 +66,17 @@ resource "helm_release" "runner" {
     TAG = var.project_id
   })]
 
+}
+
+
+
+
+
+
+module "test" {
+  source     = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
+  name       = "test"
+  namespace  = "test"
+  project_id = "multiproject-328509"
+  roles      = ["roles/storage.admin", "roles/compute.admin", "roles/owner"]
 }
