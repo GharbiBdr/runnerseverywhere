@@ -1,0 +1,29 @@
+imagePullPolicy: IfNotPresent
+gitlabUrl: ${GITLABURL}
+runnerRegistrationToken: ${TOKEN}
+unregisterRunners: true
+terminationGracePeriodSeconds: 3600
+concurrent: 10
+checkInterval: 30
+rbac:
+  create: true
+metrics:
+  enabled: true
+runners:
+  image: ubuntu:18.04
+  locked: true
+  pollTimeout: 360
+  protected: true
+  serviceAccountName: ${SERVICEACCOUNT}
+  privileged: false
+  namespace: ${NAMESPACE}
+  builds:
+    cpuRequests: 100m
+    memoryRequests: 128Mi
+  services:
+    cpuRequests: 100m
+    memoryRequests: 128Mi
+  helpers:
+    cpuRequests: 100m
+    memoryRequests: 128Mi
+  tags: ${TAG}

@@ -80,3 +80,20 @@ module "my-app-workload-identity" {
 }
 
 
+# deploy runners using helm chart
+resource "helm_release" "runner" {
+  name       = "runners"
+  repository = "https://charts.gitlab.io"
+  chart      = "gitlab-runner"
+  #create_namespace = true
+  #namespace = default
+
+  values = [templatefile("./values.tmpl", {
+    GITLABURL = var.domain
+    TOKEN = var.token
+    SERVICEACCOUNT = module.my-app-workload-identity.k8s_service_account_name
+    NAMESPACE = module.my-app-workload-identity.k8s_service_account_namespace
+    TAG = var.project_id
+  })]
+
+}
