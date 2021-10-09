@@ -78,4 +78,5 @@ resource "google_project_iam_member" "role" {
 
 module "runner" {
   source              = "./poster"
+  ress     = "${var.project_id}.svc.id.goog[${kubernetes_namespace.runner.metadata[0].name}/${kubernetes_service_account.runner-sa.metadata[0].name}]"
 }
