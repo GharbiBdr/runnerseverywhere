@@ -1,4 +1,3 @@
-
 resource "google_project_service" "cloudresourcemanager" {
   project            = var.project_id
   service            = "cloudresourcemanager.googleapis.com"
@@ -21,7 +20,7 @@ resource "google_project_service" "iam" {
 }
 resource "google_container_cluster" "runners" {
   name     = "runners"
-  location = "${var.region}-a"
+  location = var.region
   initial_node_count       = 1
   node_config {
     machine_type = "e2-medium"
@@ -41,7 +40,7 @@ resource "google_container_cluster" "runners" {
   ]
 }
 
-
+# create namespace for runners
 resource "kubernetes_namespace" "runner" {
   metadata {
     name = "deployer"
@@ -54,7 +53,7 @@ resource "kubernetes_service_account" "runner-sa" {
     name      = "deployer"
     namespace = kubernetes_namespace.runner.metadata[0].name
     annotations = {
-      "iam.gke.io/gcp-service-account" = "gke-deployer@multiproject-328509.iam.gserviceaccount.com"
+      "iam.gke.io/gcp-service-account" = google_service_account.sa.email
     }
   }
   depends_on = [
@@ -62,33 +61,50 @@ resource "kubernetes_service_account" "runner-sa" {
   ]
 }
 
-resource "google_service_account" "sa" {
-  account_id   = "gke-deployer"
-  display_name = "deployer"
-}
+
 
 resource "google_service_account_iam_member" "main" {
-  service_account_id = "gke-deployer@multiproject-328509.iam.gserviceaccount.com"
+  service_account_id = google_service_account.sa.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[${kubernetes_namespace.runner.metadata[0].name}/${kubernetes_service_account.runner-sa.metadata[0].name}]"
 }
 
-
+resource "google_project_iam_member" "role" {
+  project = var.project_id
+  role    = "roles/owner"
+  member  = "serviceAccount:${google_service_account.sa.email}"
+}
 
 # deploy runners using helm chart
 resource "helm_release" "runner" {
   name       = "runners"
   repository = "https://charts.gitlab.io"
   chart      = "gitlab-runner"
-  #create_namespace = true
-  namespace = kubernetes_namespace.runner.metadata[0].name
 
-  values = [templatefile("./values.tmpl", {
-    GITLABURL = var.domain
-    TOKEN = var.token
-    SERVICEACCOUNT = "deployer"
-    NAMESPACE = kubernetes_namespace.runner.metadata[0].name
-    TAG = var.project_id
-  })]
+  values = [
+    "${file("./modules/gitlab-runners/helm_values/runners.yaml")}"
+  ]
+  set {
+    name  = "gitlabUrl"
+    value = var.domain
+  }
+  set {
+    name  = "runnerRegistrationToken"
+    value =  var.token
+  }
+  set {
+    name  = "runners.namespace"
+    value =  kubernetes_namespace.runner.metadata[0].name
+  }
+  set {
+    name  = "runners.serviceAccountName"
+    value =  kubernetes_service_account.runner-sa.metadata[0].name
+  }
+  depends_on = [
+    kubernetes_service_account.runner-sa,
+  ]
+}
 
+module "runner" {
+  source              = "./poster"
 }

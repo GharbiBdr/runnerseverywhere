@@ -1,14 +1,14 @@
 variable "project_id" {
-  description = "The project ID to deploy to"
+  description = "GCP Project to deploy resources"
 }
-variable "region" {
-  description = "The project ID to deploy to"
-  default = "us-central1"
-}
+
 variable "domain" {
   description = "Gitlab domain"
 }
 
-variable "token" {
-  description = "gitlab runner token"
+variable "token" {}
+
+variable "region" {
+  default     = "us-central1"
+  description = "GCP region to deploy resources to"
 }
