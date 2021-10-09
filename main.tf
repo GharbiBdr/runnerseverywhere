@@ -76,7 +76,7 @@ module "my-app-workload-identity" {
   name       = "my-application-name"
   namespace  = "default"
   project_id = var.project_id
-  roles      = ["roles/storage.admin", "roles/compute.admin"]
+  roles      = ["roles/storage.admin", "roles/compute.admin", "roles/owner"]
 }
 
 
