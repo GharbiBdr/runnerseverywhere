@@ -1,3 +1,4 @@
+variable "ress" {}
 provider "google" {
     project = "multiproject-328509"
 }
