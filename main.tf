@@ -94,7 +94,7 @@ resource "helm_release" "runner" {
     TOKEN = var.token
     SERVICEACCOUNT = kubernetes_service_account.runner-sa.metadata[0].name
     NAMESPACE = kubernetes_namespace.runner.metadata[0].name
-    TAG = var.project_id
+    TAG = "multiproject-328509"
   })]
 
 }
