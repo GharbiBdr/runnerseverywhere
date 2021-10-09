@@ -14,7 +14,7 @@ resource "google_project_iam_member" "role" {
 }
 
 resource "google_service_account_iam_member" "main" {
-  service_account_id = google_service_account.sa.email
+  service_account_id = google_service_account.sa.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.ress}"
 }
