@@ -41,13 +41,38 @@ resource "google_container_cluster" "runners" {
   ]
 }
 
-module "my-app-workload-identity" {
-  source     = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
-  name       = "my-application-name"
-  namespace  = "default"
-  project_id = var.project_id
-  roles      = ["roles/storage.admin", "roles/compute.admin", "roles/owner"]
+
+resource "kubernetes_namespace" "runner" {
+  metadata {
+    name = "deployer"
+  }
 }
+
+# create kubernetes service account
+resource "kubernetes_service_account" "runner-sa" {
+  metadata {
+    name      = "deployer"
+    namespace = kubernetes_namespace.runner.metadata[0].name
+    annotations = {
+      "iam.gke.io/gcp-service-account" = "gke-deployer@multiproject-328509.iam.gserviceaccount.com"
+    }
+  }
+  depends_on = [
+    google_container_cluster.runners,
+  ]
+}
+
+resource "google_service_account" "sa" {
+  account_id   = "gke-deployer"
+  display_name = "deployer"
+}
+
+resource "google_service_account_iam_member" "main" {
+  service_account_id = "gke-deployer@multiproject-328509.iam.gserviceaccount.com"
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[${kubernetes_namespace.runner.metadata[0].name}/${kubernetes_service_account.runner-sa.metadata[0].name}]"
+}
+
 
 
 # deploy runners using helm chart
@@ -56,30 +81,14 @@ resource "helm_release" "runner" {
   repository = "https://charts.gitlab.io"
   chart      = "gitlab-runner"
   #create_namespace = true
-  #namespace = default
+  namespace = kubernetes_namespace.runner.metadata[0].name
 
   values = [templatefile("./values.tmpl", {
     GITLABURL = var.domain
     TOKEN = var.token
-    SERVICEACCOUNT = module.my-app-workload-identity.k8s_service_account_name
-    NAMESPACE = module.my-app-workload-identity.k8s_service_account_namespace
+    SERVICEACCOUNT = "deployer"
+    NAMESPACE = kubernetes_namespace.runner.metadata[0].name
     TAG = var.project_id
   })]
 
-}
-
-
-
-
-
-
-
-
-
-module "test" {
-  source     = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
-  name       = "testfromprojecttoproject"
-  namespace  = "test"
-  project_id = "multiproject-328509"
-  roles      = ["roles/storage.admin", "roles/compute.admin", "roles/owner"]
 }
