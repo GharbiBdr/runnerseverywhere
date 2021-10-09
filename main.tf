@@ -81,7 +81,7 @@ module "my-app-workload-identity" {
 
 module "data" {
   source     = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
-  name       = "my-application-name"
+  name       = "ismi"
   namespace  = "test"
   project_id = var.project_id
   roles      = ["roles/storage.admin", "roles/compute.admin"]
