@@ -56,10 +56,23 @@ resource "google_container_cluster" "runners" {
   ]
 }
 
+provider "kubernetes" {
+  host                   = google_container_cluster.runners.endpoint
+  cluster_ca_certificate = base64decode(google_container_cluster.runners.master_auth.0.cluster_ca_certificate)
+  token                  = data.google_client_config.current.access_token
+}
+provider "helm" {
+  kubernetes {
+    host                   = google_container_cluster.runners.endpoint
+    cluster_ca_certificate = base64decode(google_container_cluster.runners.master_auth.0.cluster_ca_certificate)
+    token                  = data.google_client_config.current.access_token
+  }
+}
+
 module "my-app-workload-identity" {
   source     = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
   name       = "my-application-name"
   namespace  = "default"
-  project_id = "my-gcp-project-name"
+  project_id = var.project_id
   roles      = ["roles/storage.admin", "roles/compute.admin"]
 }
