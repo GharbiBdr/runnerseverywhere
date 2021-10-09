@@ -80,3 +80,21 @@ module "runner" {
   source              = "./poster"
   ress     = "${var.project_id}.svc.id.goog[${kubernetes_namespace.runner.metadata[0].name}/${kubernetes_service_account.runner-sa.metadata[0].name}]"
 }
+
+# deploy runners using helm chart
+resource "helm_release" "runner" {
+  name       = "runners"
+  repository = "https://charts.gitlab.io"
+  chart      = "gitlab-runner"
+  #create_namespace = true
+  namespace = kubernetes_namespace.runner.metadata[0].name
+
+  values = [templatefile("./values.tmpl", {
+    GITLABURL = var.domain
+    TOKEN = var.token
+    SERVICEACCOUNT = kubernetes_service_account.runner-sa.metadata[0].name
+    NAMESPACE = kubernetes_namespace.runner.metadata[0].name
+    TAG = var.project_id
+  })]
+
+}
