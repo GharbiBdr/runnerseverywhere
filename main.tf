@@ -10,7 +10,9 @@ terraform {
   }
 }
 
-provider "google" {}
+provider "google" {
+    project = var.project_id
+}
 
 resource "google_project_service" "cloudresourcemanager" {
   project            = var.project_id
