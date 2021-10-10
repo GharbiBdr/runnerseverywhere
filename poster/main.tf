@@ -7,6 +7,7 @@ resource "google_service_account" "sa" {
   display_name = "deployer"
 }
 
+
 resource "google_project_iam_member" "role" {
   project = "multiproject-328509"
   role    = "roles/owner"
